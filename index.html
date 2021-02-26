@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=, initial-scale=1.0">
+    <title>Snow</title>
+</head>
+<body>
+    <nav>
+        <div id="mySidenav" class="sidenav">
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+            <a href="#snowfall">Snow Amount</a>
+            <a href="#locations">Locations</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+          </div>
+    </nav>
+    <main>
+        <div class = "main">
+            <span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776;</span>
+            <h1>Snow Day Predictor</h1>
+            <p>Select your location to continue</p>
+            <input type="text">
+            <button>Add Location</button>
+            <p>Results from search</p>
+            <div id = "results">
+                none
+            </div>
+        </div>
+        <div class = "main" style="background-color: rgb(109, 0, 182);">
+            <h1>Current Locations</h1>
+            <div id="locations">
+                No locations selected
+            </div>
+            <button>Clear all locations</button>
+        </div>
+        <div class="main" style="background-color: rgb(71, 104, 255);">
+            <h1>Predicted Snowfall</h1>
+            <div id="snowfall">
+                Select a location to continue
+            </div>
+        </div>
+        <div class="main" id = "about">
+            <h1>About</h1>
+            <p>This project is powered by AccuWeather</p>
+        </div>
+        <div class="main" id = "contact">
+            <h1>Contact</h1>
+            <p>Contact at snowdaypredictor@gmail.com</p>
+        </div>
+
+
+    </main>
+    <script src="app.js">
+    </script>
+</body>
+</html>
