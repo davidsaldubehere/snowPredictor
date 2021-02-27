@@ -1,9 +1,15 @@
 import requests
 import lxml.html
-
-agent = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'}
+from lxml.cssselect import CSSSelector
+import urllib.request
+agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
 search = input("Enter locations")
-response = requests.get(f"https://www.accuweather.com/en/search-locations?query={search}", headers=agent).text
-doc = lxml.html.document_fromstring(response)
-test = (doc.xpath("//div[@class='results-container']"))
-print(lxml.html.tostring(test[0]))
+r1 = urllib.request.Request(f"https://www.accuweather.com/", None, agent)
+response = (urllib.request.urlopen(r1).read())
+doc = lxml.html.fromstring(response)
+selAnchor = CSSSelector('a')
+foundElements = selAnchor(doc)
+found = [e for e in foundElements if "three" in str(e.get("href"))]
+text = [e.text_content().replace("\t", "").replace("\n", "") for e in found]
+links = [e.get("href") for e in found]
+print(links)
