@@ -3,17 +3,29 @@ import lxml.html
 from lxml.cssselect import CSSSelector
 import urllib.request
 import ssl
+import datetime
 ssl._create_default_https_context = ssl._create_unverified_context
 class Simple(Guy):
     __doc__="""
     <script>
+    setTimeout(function(){self.check() }, 1000);
     var els = [];
     var glinks;
     function recieve(value, target){
         document.getElementById(target).innerHTML = value;
-        return "worked";
+        
+    }
+    function recievePrediction(today, tomorrow){
+        document.getElementById('results').innerHTML='';
+        let td = document.createElement("H2");
+        td.innerHTML='Today: ' + today;
+        let tm = document.createElement("H2");
+        tm.innerHTML = 'Tomorrow: ' + tomorrow;
+        document.getElementById('results').appendChild(td);
+        document.getElementById('results').appendChild(tm);
     }
     function recieveSearch(values, links){
+        els = [];
         for(var i=0; i<values.length;i++){
             var li = document.createElement("LI");
             var btn = document.createElement("A");
@@ -25,7 +37,7 @@ class Simple(Guy):
         }
         for(let a = 0; a<els.length;a++){
             els[a].addEventListener("click", function(){
-                console.log(glinks[a]);
+                self.saveFile(glinks[a]);
             });
         }
     }
@@ -34,20 +46,20 @@ class Simple(Guy):
         for(var el of document.getElementsByClassName("main")){
         el.style.marginLeft = "150px";
         }
-        document.body.style.backgroundColor = "rgba(0,0,0,0.6)";
+        document.body.style.backgroundColor = "rgba(0,0,0,0)";
     }
     
     function closeNav() {
         document.getElementById("mySidenav").style.width = "0";
         for(var el of document.getElementsByClassName("main")){
         el.style.marginLeft = "0";
-        }    document.body.style.backgroundColor = "white";
+        }    document.body.style.backgroundColor = "black";
     }
     </script>
     <nav>
         <div id="mySidenav" class="sidenav">
             <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-            <a href="#snowfall">Snow Amount</a>
+            <a href="#results">Prediction</a>
             <a href="#locations">Locations</a>
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
@@ -59,18 +71,20 @@ class Simple(Guy):
             <h1>Snow Day Predictor</h1>
             <p>Select your location to continue</p>
             <input id = 'search' type="text">
-            <button onclick ="self.getLocations(document.getElementById('search').value)">Add Location</button>
-            <p>Results from search</p>
+            <button onclick ="self.getLocations(document.getElementById('search').value)">Search for this location</button>
+            <p>Results</p>
             <ol id = "results">
                 Click on a result below
             </ol>
+            <h3>Load Data</h3>
+            <button onclick='self.getSnowPrediction()'>Load snow day prediction</button>
         </div>
         <div class = "main" style="background-color: rgb(109, 0, 182);">
-            <h1>Current Locations</h1>
+            <h1>Location Status</h1>
             <div id="locations">
-                No locations selected
+                <p>No locations saved. Please choose a location above</p>
             </div>
-            <button>Clear all locations</button>
+            <button onclick='self.clear()'>Clear all locations</button>
         </div>
         <div class="main" style="background-color: rgb(71, 104, 255);">
             <h1>Predicted Snowfall</h1>
@@ -78,9 +92,10 @@ class Simple(Guy):
                 Select a location to continue
             </div>
         </div>
-        <div class="main" id = "about">
+        <div class="main" id = "about" style="background-color: black">
             <h1>About</h1>
-            <p>This project is powered by AccuWeather</p>
+            <p>This project was made to predict the chance of a school closure aka snow day</p>
+            <p>It is not infallible and should not be used in the place of an official announcment</p>
         </div>
         <div class="main" id = "contact">
             <h1>Contact</h1>
@@ -90,8 +105,12 @@ class Simple(Guy):
 
 
     <style>
+html {
+  scroll-behavior: smooth;
+}
     body {
     font-family: Arial, Helvetica, sans-serif;
+    background-color:rgb(0,0,0);
     transition: background-color .5s;
     color: white;
   }
@@ -131,9 +150,11 @@ class Simple(Guy):
 }
 
 button{
-    background: rgba(255, 255, 255, 0.623);
-    border-radius: 2px;
-    border: 2px solid black;
+    background: none;
+    border-radius: 5px;
+    border: 2px solid white;
+    color: white;
+    padding: 5px;
 }
 input{
     border-radius: 2px;
@@ -164,13 +185,55 @@ input{
 }
     </style>
 """
+    async def getSnowAmount(self):
+        agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
+        r1 = urllib.request.Request(f"https://www.accuweather.com{open('locationKeys.txt', 'r').read()}", None, agent)
+        response = urllib.request.urlopen(r1).url
+        splitURL = response.split("weather-forecast")
+        splitURL.insert(1,"winter-weather-forecast")
+        finalURL = "".join(splitURL)
+        r1 = urllib.request.Request(finalURL, None, agent)
+        response = urllib.request.urlopen(r1).read()
+        doc = lxml.html.fromstring(response)
+        if len(doc.xpath('//div[@class="phrase"]'))>4:
+            snow = ''.join(doc.xpath('//div[@class="phrase"]')[0].itertext()).replace("\t", "")
+        else:
+            snow = 'No snow'
+        return snow
+    async def getSnowPrediction(self):
+        agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
+        r1 = urllib.request.Request(f"https://www.accuweather.com{open('locationKeys.txt', 'r').read()}", None, agent)
+        response = urllib.request.urlopen(r1).url
+        splitURL = response.split("weather-forecast")
+        splitURL.insert(1,"snow-day-weather")
+        finalURL = "".join(splitURL)
+        r1 = urllib.request.Request(finalURL, None, agent)
+        response = urllib.request.urlopen(r1).read()
+        doc = lxml.html.fromstring(response)
+        today = ''.join(doc.xpath('//div[@class="cond"]')[0].itertext()).replace("\t", "")
+        tomorrow = ''.join(doc.xpath('//div[@class="cond"]')[1].itertext()).replace("\t", "")
+        timeObject = datetime.datetime.today()
+        month = timeObject.month
+        day = timeObject.day
+        snowText = await self.getSnowAmount()
+        await self.js.recieve(snowText, 'snowfall')
+        await self.js.recievePrediction(str(month) + '/' + str(day) + today, str(month) + '/' + str(day+1) + tomorrow)
+    async def clear(self):
+        open("locationKeys.txt", "w").write('')
+        await self.js.recieve("Location cleared", 'locations')
 
-    async def printS(self, value):
-        testFile = open("locationKeys.txt", "a")
-        testFile.write("Testing")
+    async def check(self):
+        if(open("locationKeys.txt", "r").read()!=""):
+            await self.js.recieve("Location Saved: click load snow day prediction", "results")
+            await self.js.recieve("Location has been saved", 'locations')
+            await self.js.recieve("Click load snow day prediction above", 'snowfall')
+    async def saveFile(self, value):
+        testFile = open("locationKeys.txt", "w")
+        testFile.write(value)
         testFile.close()
-        print(await self.js.recieve("PYTHON RECIEVED"))
-        print(await self.js.recieve("Reading file " + open("locationKeys.txt", "r").read()))
+        await self.js.recieve("Location Saved: click load snow day prediction", "results")
+        await self.js.recieve("Location has been saved", 'locations')
+        await self.js.recieve("Click load snow day prediction above", 'snowfall')
     
     async def getLocations(self, search):
         agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
@@ -182,9 +245,9 @@ input{
         selAnchor = CSSSelector('a')
         foundElements = selAnchor(doc)
         found = [e for e in foundElements if "three" in str(e.get("href"))]
+        found.pop(0)
         text = [e.text_content().replace("\t", "").replace("\n", "") for e in found]
         links = [e.get("href") for e in found]
-
         await self.js.recieve("first", "locations")
         await self.js.recieveSearch(text, links)
         await self.js.recieve("second", "locations")
