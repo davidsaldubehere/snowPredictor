@@ -11,6 +11,7 @@ class Simple(Guy):
     setTimeout(function(){self.check() }, 1000);
     var els = [];
     var glinks;
+    var loader = true;
     function recieve(value, target){
         document.getElementById(target).innerHTML = value;
         
@@ -55,6 +56,17 @@ class Simple(Guy):
         el.style.marginLeft = "0";
         }    document.body.style.backgroundColor = "black";
     }
+    function setLoader(){
+        if(loader){
+            document.getElementsByClassName('loader')[0].style.display = 'block';
+            loader = false;
+        }
+        else{
+            document.getElementsByClassName('loader')[0].style.display = 'none';
+            loader = true;
+        }
+        
+    }
     </script>
     <nav>
         <div id="mySidenav" class="sidenav">
@@ -76,6 +88,8 @@ class Simple(Guy):
             <ol id = "results">
                 Click on a result below
             </ol>
+            <div class="loader"></div>
+
             <h3>Load Data</h3>
             <button onclick='self.getSnowPrediction()'>Load snow day prediction</button>
         </div>
@@ -108,13 +122,15 @@ class Simple(Guy):
 html {
   scroll-behavior: smooth;
 }
-    body {
+body {
     font-family: Arial, Helvetica, sans-serif;
     background-color:rgb(0,0,0);
     transition: background-color .5s;
     color: white;
-  }
-  
+}
+span{
+    color: white;
+}  
 .sidenav {
     height: 100%;
     width: 0;
@@ -151,15 +167,17 @@ html {
 
 button{
     background: none;
+    margin:5px;
     border-radius: 5px;
     border: 2px solid white;
     color: white;
     padding: 5px;
 }
 input{
-    border-radius: 2px;
-    border: none;
+    border-radius: 5px;
+    border: 2px solid black;
     outline: none;
+    padding:2px;
 }
 .main {
     transition: margin-left .5s;
@@ -178,36 +196,60 @@ input{
     border: 2px solid white;
     border-radius: 5px;
 }
-  
+.loader {
+    display: none;
+    margin-left: 40px;
+    border: 5px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 5px solid #3498db;
+    width: 30px;
+    height: 30px;
+    -webkit-animation: spin 2s linear infinite; /* Safari */
+    animation: spin 2s linear infinite;
+}
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 @media screen and (max-height: 450px) {
     .sidenav {padding-top: 15px;}
     .sidenav a {font-size: 18px;}
 }
     </style>
-"""
+""" 
+    agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
+    async def reset(self):
+        await self.js.recieve("Location Saved: click load snow day prediction", "results")
+        await self.js.recieve("Location has been saved", 'locations')
+        await self.js.recieve("Click load snow day prediction above", 'snowfall')
+    def splitURL(self, response, string1, string2):
+        split = response.split(string1)
+        split.insert(1, string2)
+        return "".join(split)
+
     async def getSnowAmount(self):
-        agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
-        r1 = urllib.request.Request(f"https://www.accuweather.com{open('locationKeys.txt', 'r').read()}", None, agent)
+        r1 = urllib.request.Request(f"https://www.accuweather.com{open('locationKeys.txt', 'r').read()}", None, self.agent)
         response = urllib.request.urlopen(r1).url
-        splitURL = response.split("weather-forecast")
-        splitURL.insert(1,"winter-weather-forecast")
-        finalURL = "".join(splitURL)
-        r1 = urllib.request.Request(finalURL, None, agent)
+        finalURL = self.splitURL(response, "weather-forecast", "winter-weather-forecast")
+        r1 = urllib.request.Request(finalURL, None, self.agent)
         response = urllib.request.urlopen(r1).read()
         doc = lxml.html.fromstring(response)
         if len(doc.xpath('//div[@class="phrase"]'))>4:
             snow = ''.join(doc.xpath('//div[@class="phrase"]')[0].itertext()).replace("\t", "")
         else:
-            snow = 'No snow'
+            snow = 'No snow predicted'
         return snow
     async def getSnowPrediction(self):
-        agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
-        r1 = urllib.request.Request(f"https://www.accuweather.com{open('locationKeys.txt', 'r').read()}", None, agent)
+        await self.js.setLoader()
+        r1 = urllib.request.Request(f"https://www.accuweather.com{open('locationKeys.txt', 'r').read()}", None, self.agent)
         response = urllib.request.urlopen(r1).url
-        splitURL = response.split("weather-forecast")
-        splitURL.insert(1,"snow-day-weather")
-        finalURL = "".join(splitURL)
-        r1 = urllib.request.Request(finalURL, None, agent)
+        finalURL = self.splitURL(response, "weather-forecast", "snow-day-weather")
+        r1 = urllib.request.Request(finalURL, None, self.agent)
         response = urllib.request.urlopen(r1).read()
         doc = lxml.html.fromstring(response)
         today = ''.join(doc.xpath('//div[@class="cond"]')[0].itertext()).replace("\t", "")
@@ -216,6 +258,7 @@ input{
         month = timeObject.month
         day = timeObject.day
         snowText = await self.getSnowAmount()
+        await self.js.setLoader()
         await self.js.recieve(snowText, 'snowfall')
         await self.js.recievePrediction(str(month) + '/' + str(day) + today, str(month) + '/' + str(day+1) + tomorrow)
     async def clear(self):
@@ -224,23 +267,20 @@ input{
 
     async def check(self):
         if(open("locationKeys.txt", "r").read()!=""):
-            await self.js.recieve("Location Saved: click load snow day prediction", "results")
-            await self.js.recieve("Location has been saved", 'locations')
-            await self.js.recieve("Click load snow day prediction above", 'snowfall')
+            await self.reset()
     async def saveFile(self, value):
         testFile = open("locationKeys.txt", "w")
         testFile.write(value)
         testFile.close()
-        await self.js.recieve("Location Saved: click load snow day prediction", "results")
-        await self.js.recieve("Location has been saved", 'locations')
-        await self.js.recieve("Click load snow day prediction above", 'snowfall')
+        await self.reset()
     
     async def getLocations(self, search):
+        await self.js.setLoader()
         agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
-        r1 = urllib.request.Request(f"https://www.accuweather.com/en/search-locations?query={search}", None, headers=agent)
-        await self.js.recieve("right before attempt", "locations")
+        r1 = urllib.request.Request(f"https://www.accuweather.com/en/search-locations?query={search.replace(' ', '+')}", None, headers=agent)
+        await self.js.recieve("searching", "locations")
         response = (urllib.request.urlopen(r1).read())
-        await self.js.recieve("got response", "locations")
+        await self.js.recieve("processing", "locations")
         doc = lxml.html.fromstring(response)
         selAnchor = CSSSelector('a')
         foundElements = selAnchor(doc)
@@ -248,9 +288,8 @@ input{
         found.pop(0)
         text = [e.text_content().replace("\t", "").replace("\n", "") for e in found]
         links = [e.get("href") for e in found]
-        await self.js.recieve("first", "locations")
         await self.js.recieveSearch(text, links)
-        await self.js.recieve("second", "locations")
+        await self.js.setLoader()
 
 if __name__ == "__main__":
     x=Simple()
