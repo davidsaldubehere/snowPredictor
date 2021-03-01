@@ -7,6 +7,9 @@ import datetime
 ssl._create_default_https_context = ssl._create_unverified_context
 class Simple(Guy):
     __doc__="""
+    <head>
+    <script src="https://kit.fontawesome.com/39f2a6897b.js" crossorigin="anonymous"></script>
+    </head>
     <script>
     setTimeout(function(){self.check() }, 1000);
     var els = [];
@@ -103,7 +106,7 @@ class Simple(Guy):
         <div class="main" style="background-color: rgb(71, 104, 255);">
             <h1>Predicted Snowfall</h1>
             <div id="snowfall">
-                Select a location to continue
+                Select a location to continue <i class="far fa-snowflake"></i>
             </div>
         </div>
         <div class="main" id = "about" style="background-color: black">
