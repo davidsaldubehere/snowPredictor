@@ -8,7 +8,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 class Simple(Guy):
     __doc__="""
     <script>
-    setTimeout(function(){self.check() }, 1000);
+    setTimeout(function(){self.check() }, 500);
     var els = [];
     var glinks;
     var loader = true;
