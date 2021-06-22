@@ -48,7 +48,7 @@ p4a.port = 8000
 #garden_requirements =
 
 # (str) Presplash of the application
-#presplash.filename = splash.png
+presplash.filename = %(source.dir)s/testsplash.png
 
 # (str) Icon of the application
 icon.filename = icon.png
