@@ -29,5 +29,5 @@ jobs:
       uses: ArtemSBulgakov/buildozer-action@v1
       id: buildozer
       with:
-        workdir: test_app
+        workdir: .
         buildozer_version: stable
