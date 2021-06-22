@@ -48,7 +48,7 @@ p4a.port = 8000
 #garden_requirements =
 
 # (str) Presplash of the application
-presplash.filename = splash.png
+#presplash.filename = splash.png
 
 # (str) Icon of the application
 icon.filename = icon.png
@@ -84,7 +84,7 @@ fullscreen = 0
 # red, blue, green, black, white, gray, cyan, magenta, yellow, lightgray,
 # darkgray, grey, lightgrey, darkgrey, aqua, fuchsia, lime, maroon, navy,
 # olive, purple, silver, teal.
-android.presplash_color = black
+android.presplash_color = blue
 
 # (list) Permissions
 android.permissions = INTERNET
