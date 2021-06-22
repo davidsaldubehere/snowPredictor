@@ -1,1 +1,1 @@
-/web-api/three-day-redirect?key=335332&target=
+/web-api/three-day-redirect?key=331216&target=
