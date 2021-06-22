@@ -28,4 +28,6 @@ jobs:
     - name: Build app
       run: |
         # attempt to build
+        sudo apt-get install libstdc++6
+        sudo apt-get install aidl
         buildozer android deploy debug
