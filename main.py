@@ -5,11 +5,12 @@ import urllib.request
 import ssl
 import datetime
 ssl._create_default_https_context = ssl._create_unverified_context
+#preload files for smoother loading
+externalJS = f"<script>{open('app.js', 'r').read()}</script>"
+externalCSS = f"<style>{open('style.css', 'r').read()}</style>"
 class Simple(Guy):
     #parse js and css
-    externalJS = f"<script>{open('app.js', 'r').read()}</script>"
-    externalCSS = f"<style>{open('style.css', 'r').read()}</style>"
-    __doc__=f"{open('index.html', 'r').read()}{externalJS}{externalCSS}"
+    __doc__=f"{externalJS}{externalCSS}{open('index.html', 'r').read()}"
     agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
     baseURL = "https://www.accuweather.com"
     async def reset(self):
